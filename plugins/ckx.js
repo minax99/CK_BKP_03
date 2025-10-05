@@ -120,4 +120,4 @@ cmd(
             console.log(e);
             await reply("*❌ Error: " + e + "*")
         }
-    }
+    });
