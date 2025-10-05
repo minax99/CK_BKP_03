@@ -1,123 +1,123 @@
+const { fetchJson } = require("../lib/functions");
+const cheerio = require("cheerio");
+const axios = require("axios");
 const { cmd, commands } = require('../command');
-const { fetchJson } = require('../lib/functions');
 
-const ck_footer = "> 👨🏻‍💻 ᴍᴀᴅᴇ ʙʏ *ᴄʜᴇᴛʜᴍɪɴᴀ ᴋᴀᴠɪꜱʜᴀɴ*";
 
-cmd(
-    {
-        pattern: "xnxx",
-        alias: ["xvdl", "xvideo"],
-        use: ".xnxx <xnxx video name>",
-        react: "🤤",
-        desc: "Search and download xnxx.com 18+ videos.",
-        category: "download",
-        filename: __filename
-    }, async (conn, mek, m, {q, from, reply}) => {
-        
-        const react = async (msgKey, emoji) => {
-    try {
-      await conn.sendMessage(from, {
-        react: {
-          text: emoji,
-          key: msgKey
-        }
-      });
-    } catch (e) {
-      console.error("Reaction error:", e.message);
+
+
+cmd({
+  pattern: "xxx",
+  alias: ["xvideos", "xporn","xvideo"],
+  desc: "Search and download adult videos from XVideos",
+  category: "download",
+  filename: __filename
+}, async (conn, m, store, { from, quoted, q, reply }) => {
+  try {
+    if (!q) return reply("❌ Please enter a keyword. Example: .porn mia khalifa");
+
+    await conn.sendMessage(from, {
+      react: { text: '🔍', key: m.key }
+    });
+
+    // Search for video by keyword
+    const searchRes = await fetch(`https://apis-keith.vercel.app/search/searchxvideos?q=${encodeURIComponent(q)}`);
+    const searchData = await searchRes.json();
+
+    if (!searchData.status || !searchData.result || !searchData.result[0]) {
+      return reply("❌ No videos found for that keyword.");
     }
-  };
-        try {
-            
-            if (!q) {
-                await reply("Please enter xnxx.com video name !!")
-            }
-            
-            const xnxxSearchapi = await fetchJson(`https://tharuzz-ofc-api-v2.vercel.app/api/search/xvsearch?query=${q}`);
-            
-            if (!xnxxSearchapi.result.xvideos) {
-                await reply("No result found you enter xnxx video name :(")
-            }
-            
-            let list = "🔞 CHETHMINA-MD XNXX VIDEO SEARCH RESULT\n\n";
-            
-            xnxxSearchapi.result.xvideos.forEach((xnxx, i) => {
-      list += `*\`${i + 1}\` | | ${xnxx.title || "No title info"}*\n`;
-    });
-          
-          const listMsg = await conn.sendMessage(from, { text: list + "\n🔢 *ʀᴇᴘʟʏ ʙᴇʟᴏᴡ ᴀ ɴᴜᴍʙᴇʀ ᴄʜᴏᴏꜱᴇ ᴀ ʀᴇᴀᴜʟᴛ.*\n\n" + ck_footer }, { quoted: mek });
-          const listMsgId = listMsg.key.id;
-          
-          conn.ev.on("messages.upsert", async (update) => {
-              
-              const msg = update?.messages?.[0];
-              if (!msg?.message) return;
 
-              const text = msg.message?.conversation || msg.message?.extendedTextMessage?.text;
-              const isReplyToList = msg?.message?.extendedTextMessage?.contextInfo?.stanzaId === listMsgId;
-              if (!isReplyToList) return;
-              
-              const index = parseInt(text.trim()) - 1;
-              if (isNaN(index) || index < 0 || index >= xnxxSearchapi.result.xvideos.length) return reply("❌ *`ɪɴᴠᴀʟɪᴅ ɴᴜᴍʙᴇʀ ᴘʟᴇᴀꜱᴇ ᴇɴᴛᴇʀ ᴠᴀʟɪᴅ  ɴᴜᴍʙᴇʀ.`*");
-              await react(msg.key, '✅');
-              
-              const chosen = xnxxSearchapi.result.xvideos[index];
-              
-              const xnxxDownloadapi = await fetchJson(`https://tharuzz-ofc-api-v2.vercel.app/api/download/xvdl?url=${chosen.link}`);
-              
-              const infoMap = xnxxDownloadapi?.result;
-              
-              const downloadUrllow = xnxxDownloadapi?.result?.dl_Links?.lowquality;
-              
-              const downloadUrlhigh = xnxxDownloadapi?.result?.dl_Links?.highquality;
-              
-              const askType = await conn.sendMessage(
-            from,{
-                image: {url: infoMap.thumbnail },
-                caption: `*🔞 \`XNXX VIDEO INFO\`*\n\n` +
-                `*📌 \`Title:\` ${infoMap.title}*\n` + 
-                `*⏰ \`Duration:\` ${infoMap.duration}*\n\n` +
-                `*🔢 \`Reply below number:\`*\n\n` +
-                `*1 | | Download video high quality*\n` +
-                `*2 | | Download video low quality*\n\n` + ck_footer
-            }, { quoted:msg }
-        );
-            
-            const typeMsgId = askType.key.id; 
-            
-            conn.ev.on("messages.upsert", async (tUpdate) => {
-                
-                const tMsg = tUpdate?.messages?.[0];
-            if (!tMsg?.message) return;
+    const videoUrl = searchData.result[0].url;
 
-            const tText = tMsg.message?.conversation || tMsg.message?.extendedTextMessage?.text;
-            const isReplyToType = tMsg?.message?.extendedTextMessage?.contextInfo?.stanzaId === typeMsgId;
-            if (!isReplyToType) return;
-       
-            await react(tMsg.key, tText.trim() === "1" ? '🎥' : tText.trim() === "2" ? '🎥' : '❓');
-            
-            if (tText.trim() === "1") {
-                await conn.sendMessage(
-                    from,
-                    {
-                      video: {url: downloadUrlhigh },
-                      caption: `*🔞 Here is your xnxx high quality video.*\n\n> ${infoMap.title}`
-                    }, {quoted: tMsg}
-                )
-            } else if (tText.trim() === "2") {
-                await conn.sendMessage(
-                    from, {
-                        video: {url: downloadUrllow },
-                        caption: `*🔞 Here is your xnxx low quality video.*\n\n> ${infoMap.title}`
+    // Download using Keith's API
+    const response = await fetch(`https://apis-keith.vercel.app/download/porn?url=${encodeURIComponent(videoUrl)}`);
+    const data = await response.json();
 
-                    }, {quoted: tMsg}
-                )
-            } else {
-                await conn.sendMessage(from, { text: "❌ *`ɪɴᴠᴀʟɪᴅᴇ ɪɴᴘᴜᴛ. 1ꜰᴏʀ ᴠɪᴅᴇᴏ high quality ᴛʏᴘᴇ / 2 ꜰᴏʀ video low quality ᴛʏᴘᴇ`*" }, { quoted: tMsg });
-            }
-            });
-          });
-        } catch (e) {
-            console.log(e);
-            await reply("*❌ Error: " + e + "*")
+    if (!data.status || !data.result) {
+      return reply("⚠️ Failed to retrieve video. Please try again.");
+    }
+
+    const { videoInfo, downloads } = data.result;
+    const { title, thumbnail, duration } = videoInfo;
+
+    const caption = `╭════ 〔 *CHETHMINA MD* 〕═══❐\n`
+      + `┃▸ *Title:* ${title}\n`
+      + `┃▸ *Duration:* ${Math.floor(duration / 60)} min ${duration % 60} sec\n`
+      + `╰═════════════════❐\n\n`
+      + `📹 *Download Options:*\n`
+      + `1️⃣  *Low Quality*\n`
+      + `2️⃣  *High Quality*\n`
+      + `📌 *Reply with the number to download your choice.*\n\n`
+      + `> 👨🏻‍💻 ᴍᴀᴅᴇ ʙʏ *ᴄʜᴇᴛʜᴍɪɴᴀ ᴋᴀᴠɪꜱʜᴀɴ*`;
+
+    const sentMsg = await conn.sendMessage(from, {
+      image: { url: thumbnail },
+      caption: caption
+    }, { quoted: m });
+
+    const messageID = sentMsg.key.id;
+
+    conn.ev.on("messages.upsert", async (msgData) => {
+      const receivedMsg = msgData.messages[0];
+      if (!receivedMsg.message) return;
+
+      const receivedText = receivedMsg.message.conversation || receivedMsg.message.extendedTextMessage?.text;
+      const senderID = receivedMsg.key.remoteJid;
+      const isReplyToBot = receivedMsg.message.extendedTextMessage?.contextInfo?.stanzaId === messageID;
+
+      if (isReplyToBot) {
+        await conn.sendMessage(senderID, {
+          react: { text: '⬇️', key: receivedMsg.key }
+        });
+
+        switch (receivedText) {
+          case "1":
+            await conn.sendMessage(senderID, {
+              video: { url: downloads.lowQuality },
+              caption: "📥 *Downloaded in Low Quality*"
+            }, { quoted: receivedMsg });
+            break;
+
+          case "2":
+            await conn.sendMessage(senderID, {
+              video: { url: downloads.highQuality },
+              caption: "📥 *Downloaded in High Quality*"
+            }, { quoted: receivedMsg });
+            break;
+
+          case "3":
+            await conn.sendMessage(senderID, {
+              audio: { url: downloads.lowQuality },
+              mimetype: "audio/mpeg"
+            }, { quoted: receivedMsg });
+            break;
+
+          case "4":
+            await conn.sendMessage(senderID, {
+              document: { url: downloads.lowQuality },
+              mimetype: "audio/mpeg",
+              fileName: "XVideos_Audio.mp3",
+              caption: "📥 *Audio Downloaded as Document*"
+            }, { quoted: receivedMsg });
+            break;
+
+          case "5":
+            await conn.sendMessage(senderID, {
+              audio: { url: downloads.lowQuality },
+              mimetype: "audio/mp4",
+              ptt: true
+            }, { quoted: receivedMsg });
+            break;
+
+          default:
+            reply("❌ Invalid option! Please reply with 1, 2, 3, 4, or 5.");
         }
+      }
     });
+
+  } catch (error) {
+    console.error("Error:", error);
+    reply("❌ An error occurred while processing your request. Please try again.");
+  }
+});
